@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Backend FastAPI metrikleri
+  - job_name: 'voiceai-backend'
+    static_configs:
+      - targets: ['voiceai-backend:8000']
+    metrics_path: '/metrics'
+
+  # AI Engine metrikleri
+  - job_name: 'voiceai-ai-engine'
+    static_configs:
+      - targets: ['voiceai-ai-engine:8001']
+    metrics_path: '/metrics'
+
+  # PostgreSQL metrikleri
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['voiceai-postgres:5432']
+
+  # Redis metrikleri
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['voiceai-redis:6379']
+
+  # Node exporter (sistem metrikleri)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # Prometheus kendisi
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

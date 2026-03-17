@@ -1,0 +1,62 @@
+# Gizli dosyalar — asla Git'e gönderilmez
+.env
+.env.local
+.env.production
+
+# SSL sertifikaları
+nginx/ssl/
+*.pem
+*.key
+*.crt
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+.next/
+out/
+*.log
+npm-debug.log*
+
+# AI Model ağırlıkları (çok büyük)
+*.gguf
+*.bin
+models/
+ollama_data/
+
+# Veritabanı dosyaları
+*.sql.gz
+backups/
+
+# Docker volumes (yerel)
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ses dosyaları (büyük)
+*.wav
+*.mp3
+*.ogg
+voice_samples/
+cloned_voices/
+
+# Log dosyaları
+logs/
+*.log

@@ -1,0 +1,69 @@
+{
+  "title": "VoiceAI Platform Dashboard",
+  "uid": "voiceai-main",
+  "version": 1,
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Aktif Çağrı Sayısı",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "voiceai_active_calls_total", "legendFormat": "Aktif Çağrı"}]
+    },
+    {
+      "id": 2,
+      "title": "Günlük Çağrı",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [{"expr": "increase(voiceai_calls_total[24h])", "legendFormat": "Bugün"}]
+    },
+    {
+      "id": 3,
+      "title": "RAM Kullanımı",
+      "type": "gauge",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [{"expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100", "legendFormat": "RAM %"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "minVizValue": 0, "maxVizValue": 100}
+    },
+    {
+      "id": 4,
+      "title": "CPU Kullanımı",
+      "type": "gauge",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [{"expr": "100 - (avg by(instance)(rate(node_cpu_seconds_total{mode='idle'}[5m])) * 100)", "legendFormat": "CPU %"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "minVizValue": 0, "maxVizValue": 100}
+    },
+    {
+      "id": 5,
+      "title": "Çağrı Sayısı (Zaman Serisi)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [{"expr": "rate(voiceai_calls_total[5m])", "legendFormat": "Çağrı/dk"}]
+    },
+    {
+      "id": 6,
+      "title": "API Gecikme Süresi",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [{"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "p95 gecikme"}]
+    },
+    {
+      "id": 7,
+      "title": "Hata Oranı",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [{"expr": "rate(http_requests_total{status=~'5..'}[5m])", "legendFormat": "5xx Hata"}]
+    },
+    {
+      "id": 8,
+      "title": "Disk Kullanımı",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [{"expr": "(1 - node_filesystem_avail_bytes{mountpoint='/'} / node_filesystem_size_bytes{mountpoint='/'}) * 100", "legendFormat": "Disk %"}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "minVizValue": 0, "maxVizValue": 100}
+    }
+  ],
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s"
+}

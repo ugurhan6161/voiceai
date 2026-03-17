@@ -1,0 +1,4 @@
+CLAUDE.md ve PROGRESS.md dosyalarını oku.
+Bu proje VoiceAI — Türkçe sesli resepsiyonist SaaS platformu.
+Her adımı Türkçe açıkla ve önemli işlemlerden önce onay iste.
+Docker dışında kurulum yapma. Hard-code değer yazma.
