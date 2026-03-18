@@ -57,6 +57,7 @@ echo -e "   • Mevcut VoiceAI kurulumu silinecek ($INSTALL_DIR)"
 echo -e "   • Tüm Docker container/image/volume'lar kaldırılacak"
 echo -e "   • Asterisk yapılandırması sıfırlanacak"
 echo -e "   • Geçici ve önbellek dosyaları temizlenecek"
+echo -e "   • SSH root erişimi açık bırakılacak (PermitRootLogin yes)"
 if [ "$FULL_CLEAN" = true ]; then
     echo -e "   ${RED}• [--full] Docker ve Asterisk paketleri de kaldırılacak${RESET}"
 fi
@@ -179,8 +180,25 @@ else
     echo -e "  ℹ️  jail.local zaten yok"
 fi
 
-# ── 6. UFW Portlarını Sıfırla ─────────────────────────────────
-echo -e "${BOLD}[6/7] UFW güvenlik duvarı kuralları sıfırlanıyor...${RESET}"
+# ── 6. SSH Erişimini Geri Yükle ───────────────────────────────
+echo -e "${BOLD}[6/8] SSH root erişimi geri yükleniyor...${RESET}"
+# setup.sh önceki sürümleri PermitRootLogin no yapıyordu.
+# Cleanup sonrası yeniden kurulum veya VPS erişimi için root
+# girişinin açık olması gerekir.
+if [ -f /etc/ssh/sshd_config ]; then
+    if grep -qE '^\s*PermitRootLogin[\s=]+no' /etc/ssh/sshd_config 2>/dev/null; then
+        sed -i 's/^\s*PermitRootLogin\s.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+        systemctl restart sshd 2>/dev/null || true
+        echo -e "  ${GREEN}✓ PermitRootLogin yes — SSH root erişimi geri yüklendi${RESET}"
+    else
+        echo -e "  ℹ️  SSH root erişimi zaten açık"
+    fi
+else
+    echo -e "  ℹ️  /etc/ssh/sshd_config bulunamadı — atlanıyor"
+fi
+
+# ── 7. UFW Portlarını Sıfırla ─────────────────────────────────
+echo -e "${BOLD}[7/8] UFW güvenlik duvarı kuralları sıfırlanıyor...${RESET}"
 if command -v ufw &>/dev/null; then
     ufw --force reset 2>/dev/null || true
     ufw allow 22/tcp 2>/dev/null || true
@@ -190,8 +208,8 @@ else
     echo -e "  ℹ️  UFW kurulu değil — atlanıyor"
 fi
 
-# ── 7. Sistem Önbelleği ve Geçici Dosyaları Temizle ───────────
-echo -e "${BOLD}[7/7] Sistem önbelleği ve geçici dosyalar temizleniyor...${RESET}"
+# ── 8. Sistem Önbelleği ve Geçici Dosyaları Temizle ───────────
+echo -e "${BOLD}[8/8] Sistem önbelleği ve geçici dosyalar temizleniyor...${RESET}"
 apt-get autoremove -y 2>/dev/null || true
 apt-get autoclean -y 2>/dev/null || true
 rm -rf /tmp/voiceai* /tmp/get-docker.sh 2>/dev/null || true

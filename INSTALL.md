@@ -339,10 +339,77 @@ python3 /opt/voiceai/scripts/rotate_encryption_key.py
 
 ---
 
+## 🆘 SSH / VPS Erişimi Kesildi — Acil Kurtarma
+
+> Bu sorun genellikle `setup.sh`'ın eski sürümünün `PermitRootLogin no`
+> yapmasından kaynaklanır. Güncel `setup.sh` bu değişikliği artık yapmaz;
+> ancak eski kurulumdan etkilendiyseniz aşağıdaki adımları uygulayın.
+
+### Adım 1 — VPS Sağlayıcısının Web Konsoluna Girin
+
+SSH bağlantısı tamamen kesildiğinde, VPS sağlayıcınızın **web konsolu
+(KVM / noVNC)** üzerinden sunucuya doğrudan erişebilirsiniz:
+
+| Sağlayıcı | Konsol Yolu |
+|-----------|-------------|
+| Hetzner | Cloud Console → Sunucu → Console |
+| DigitalOcean | Droplet → Access → Launch Droplet Console |
+| Contabo | Customer Panel → Your Services → VNC |
+| Vultr | Products → Server → View Console |
+| Linode/Akamai | Linodes → Launch LISH Console |
+| OVH | Server Dashboard → KVM |
+| Diğerleri | Kontrol panelinde "Console", "VNC" veya "KVM" arayın |
+
+### Adım 2 — Kurtarma Scriptini Çalıştırın
+
+Web konsolda root olarak giriş yaptıktan sonra:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/ssh-recover.sh \
+  | bash
+```
+
+Script şunları yapar:
+- `PermitRootLogin yes` ayarlar ve SSH servisini yeniden başlatır
+- UFW'de 22/tcp portunu açık bırakır
+- fail2ban SSH ban listesini temizler
+
+### Adım 3 — PuTTY / VS Code ile Bağlanın
+
+Script tamamlandıktan sonra normal SSH bağlantısı çalışmalıdır:
+
+```
+Host     : 31.57.77.166
+Port     : 22
+Kullanıcı: root
+```
+
+### Elle Kurtarma (curl yoksa)
+
+Web konsoldan tek tek komut olarak çalıştırın:
+
+```bash
+# SSH root girişini aç
+sed -i 's/^\s*PermitRootLogin\s.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+grep -q 'PermitRootLogin' /etc/ssh/sshd_config || echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+
+# SSH'yi yeniden başlat
+systemctl restart sshd
+
+# UFW: SSH portunu garanti altına al
+ufw allow 22/tcp && ufw reload
+
+# fail2ban ban listesini temizle
+fail2ban-client set sshd unbanip 0.0.0.0/0 2>/dev/null || true
+```
+
+---
+
 ## 📋 Sorun Giderme
 
 | Sorun | Çözüm |
 |-------|-------|
+| SSH bağlantısı kesildi | [SSH Kurtarma](#-ssh--vps-erişimi-kesildi--acil-kurtarma) bölümüne bakın |
 | Nginx SSL hatası | `nginx/ssl/` dizinini ve sertifika dosyalarını kontrol et |
 | Ollama model yok | `docker exec voiceai-ollama ollama pull llama3.1:8b` çalıştır |
 | DB bağlantı hatası | `.env` içindeki `POSTGRES_PASSWORD`'u kontrol et |

@@ -87,11 +87,21 @@ systemctl restart fail2ban
 echo "✅ Fail2ban aktif"
 
 # ── 5. SSH Güvenliği ────────────────────────────────────────
-echo "🔑 [5/10] SSH güvenliği sıkılaştırılıyor..."
-sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-systemctl restart sshd
-echo "✅ SSH: Root login kapalı"
+echo "🔑 [5/10] SSH erişimi kontrol ediliyor..."
+# ⚠️  PermitRootLogin değiştirilmiyor: VPS'te genellikle yalnızca root
+#     hesabı bulunur; root SSH kapatılırsa sunucuya erişim tamamen
+#     kesilebilir. SSH sıkılaştırması (PermitRootLogin no, anahtar
+#     tabanlı giriş vb.) kurulumdan SONRA elle ve dikkatli şekilde
+#     yapılmalıdır.
+# Root girişinin aktif olduğundan emin ol (cleanup.sh çalıştıysa geri
+# yüklemiş olabilir; yoksa VPS varsayılanı olan "yes" zaten geçerlidir).
+if grep -qE '^\s*PermitRootLogin[\s=]+no' /etc/ssh/sshd_config 2>/dev/null; then
+    sed -i 's/^\s*PermitRootLogin\s.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+    systemctl restart sshd
+    echo "✅ SSH: PermitRootLogin yes olarak geri yüklendi"
+else
+    echo "✅ SSH: Root girişi zaten aktif"
+fi
 
 # ── 6. Otomatik Güncellemeler ───────────────────────────────
 echo "🔄 [6/10] Otomatik güvenlik güncellemeleri aktif ediliyor..."
