@@ -1,0 +1,196 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    VOICEAI PLATFORM — QUICK SUMMARY                        ║
+║                   Turkish AI Voice Reception SaaS Platform                  ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📊 REPOSITORY STATS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Total Size:       536 KB
+  Total Files:      ~75
+  Total Lines:      ~9,000 LOC
+  Primary Language: Python (backend/AI) + TypeScript (frontend)
+  Database:         PostgreSQL 16 (multi-tenant)
+
+🏗️ ARCHITECTURE LAYERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TELEPHONY        Asterisk 18+ (PJSIP SIP trunk)
+  ↓
+  AUDIO I/O        AudioSocket Protocol (Port 9092)
+  ↓
+  AI PIPELINE      STT → LLM → TTS (orchestrator.py)
+  ↓
+  BACKEND API      FastAPI (8000) + PostgreSQL + Redis
+  ↓
+  FRONTEND         Next.js Admin/Company Dashboards (3000)
+  ↓
+  MONITORING       Prometheus + Grafana
+
+🐳 DOCKER SERVICES (14 TOTAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  nginx              → Reverse proxy (80, 443)
+  postgres           → PostgreSQL 16 (5432)
+  redis              → Cache + queue (6379)
+  ollama             → LLM server (11434)
+  whisper            → STT Faster-Whisper (9000)
+  xtts               → TTS voice synthesis (5002)
+  ai-engine          → Main orchestrator (9092)
+  backend            → FastAPI REST API (8000)
+  celery-worker      → Async task processing
+  celery-beat        → Cron scheduler
+  frontend           → Next.js dashboards (3000)
+  chromadb           → Vector DB for RAG
+  prometheus         → Metrics collection
+  grafana            → Monitoring dashboards
+
+🤖 AI/VOICE PIPELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FLOW: Incoming Call → SIP/Asterisk → AudioSocket (TCP) → AI Pipeline
+        ↓
+        STT (Faster-Whisper Turbo)        [Turkish, 8kHz audio]
+        ↓
+        LLM (Turkish-Llama-3-8B)          [Function calling + Slot filling]
+        ↓
+        Function Execution (if needed)    [DB operations: bookings, appointments]
+        ↓
+        TTS (XTTS-v2)                     [Voice synthesis, 8kHz WAV]
+        ↓
+        Call Routing                      [Back to caller OR transfer to agent]
+
+  KEY CLASSES:
+    • PipelineOrchestrator (orchestrator.py)     — Full pipeline management (425 lines)
+    • CallManager (call_manager.py)               — Call lifecycle (645 lines)
+    • ARIClient (ari_client.py)                   — WebSocket event handler (271 lines)
+    • AudioHandler (audio_handler.py)             — AudioSocket TCP server (325 lines)
+    • FunctionCallingEngine (function_calling.py) — LLM function execution (450 lines)
+    • SlotFillingEngine (slot_filling.py)         — Required field collection (399 lines)
+    • MemoryManager (memory_manager.py)           — Conversation history (456 lines)
+
+📁 KEY DIRECTORIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  /ai-engine/
+    ├── ari/          → Asterisk integration (⚠️ REMOVE FOR LIVEKIT)
+    ├── llm/          → LLM logic (✅ KEEP: domain-agnostic)
+    ├── pipeline/     → Pipeline orchestrator (⚠️ REFACTOR FOR LIVEKIT)
+    ├── stt/, tts/    → Service clients (✅ KEEP)
+    └── templates/    → 40+ sector templates (✅ KEEP)
+
+  /backend/
+    ├── routers/      → REST API endpoints (✅ KEEP)
+    ├── services/     → Business logic (⚠️ REMOVE: sip_provision, callback)
+    ├── tasks/        → Celery jobs (✅ KEEP)
+    ├── crypto.py     → AES-256-GCM encryption (✅ KEEP)
+    └── middleware/   → Multi-tenancy (✅ KEEP)
+
+  /frontend/
+    ├── app/admin/    → Super admin dashboard (✅ KEEP)
+    ├── app/firma/    → Company dashboard (⚠️ UPDATE: remove SIP pages)
+    └── lib/api.ts    → HTTP client (✅ KEEP)
+
+  /asterisk/         → Asterisk config (🗑️ DELETE FOR LIVEKIT)
+  /database/         → SQL schemas (✅ KEEP: may need call_id updates)
+
+🔧 FRAMEWORK STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ Pipecat AI           → In Dockerfile but NOT actively used (custom orchestrator)
+  ❌ LangGraph            → NOT integrated (no state management yet)
+  ❌ LiveKit Agents       → NOT integrated (current use: Asterisk)
+
+🔐 SECURITY & DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Encryption:       AES-256-GCM (cryptography.io)
+  Encrypted Fields: API keys, SIP passwords, SMS credentials
+  Database:         PostgreSQL 16 multi-tenant
+  Auth:             JWT (FastAPI + python-jose)
+  Compliance:       KVKK (Turkish data protection law)
+
+💾 DATABASE SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Shared (all tenants):
+    • users, firms, calls, settings, sip_extensions
+  
+  Per-template:
+    • otel_schema.sql          (166 lines) — Hotels
+    • klinik_schema.sql        (196 lines) — Clinics
+    • hali_yikama_schema.sql   (175 lines) — Carpet cleaning
+    • su_tup_schema.sql        (216 lines) — Water delivery
+
+🎯 LARGEST FILES (by lines)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. call_manager.py         (645) ← Call lifecycle management
+  2. memory_manager.py       (456) ← Conversation history
+  3. function_calling.py     (450) ← Function execution
+  4. orchestrator.py         (425) ← Full AI pipeline
+  5. admin.py                (419) ← Admin API endpoints
+
+🗑️ REMOVE FOR LIVEKIT (TOTAL: ~2,300 LINES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • ai-engine/ari/              (~1,300 lines) — Asterisk integration
+  • asterisk/                   (~500 lines)   — Asterisk config
+  • backend/services/callback_service.py
+  • backend/services/sip_provision_service.py
+  • backend/routers/sip.py
+  • scripts/create_ivr_sounds.py
+  • frontend/app/firma/zoiper-kurulum/
+
+  ⚠️ These are Asterisk-specific and NOT needed with LiveKit
+
+✅ KEEP & REFACTOR FOR LIVEKIT (TOTAL: ~6,700 LINES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • ai-engine/llm/              — Domain logic (keep as-is)
+  • ai-engine/pipeline/         — Adapt to LiveKit I/O
+  • ai-engine/stt/, tts/        — Service clients (update endpoints)
+  • ai-engine/templates/        — 40+ sector templates (keep)
+  • backend/routers/            — REST API (update endpoints)
+  • backend/services/           — Business logic (remove SIP-specific)
+  • backend/middleware/         — Multi-tenancy (keep)
+  • database/                   — Schemas (update call_id format)
+  • frontend/                   — Dashboards (update UI/API calls)
+
+💾 BACKEND DEPENDENCIES (Python)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Core:
+    fastapi, uvicorn, sqlalchemy, asyncpg, redis, celery
+  Encryption/Security:
+    cryptography, python-jose, passlib
+  HTTP:
+    httpx, aiohttp, websockets
+  Data:
+    pydantic
+  AI (Note: pipecat-ai present but not used):
+    pipecat-ai, langchain (not installed)
+
+🖥️ SYSTEM REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  VPS:       8 CPU cores, 16 GB RAM, 100 GB NVMe, Ubuntu 22.04
+  Memory:    Ollama 6-8GB, Whisper 2-3GB, XTTS 2-3GB, Backend 1-2GB
+  Total:     ~13-16 GB (at capacity)
+
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • REPOSITORY_OVERVIEW.md   ← Full comprehensive overview (NEW)
+  • CLAUDE.md                ← Project context for AI assistance
+  • PROGRESS.md              ← Development progress log
+  • README.md                ← Getting started
+  • USER_GUIDE.md            ← Admin panel guide
+
+🚀 LIVEKIT MIGRATION EFFORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Phase 1: Setup LiveKit infrastructure        (~3 days)
+  Phase 2: Refactor AI engine                  (~5 days)
+  Phase 3: Update backend API                  (~3 days)
+  Phase 4: Update frontend                     (~2 days)
+  Phase 5: Testing & deployment                (~3 days)
+  ─────────────────────────────────────────────────────
+  TOTAL: ~16 days (2-3 weeks with planning)
+
+📝 NEXT ACTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Review REPOSITORY_OVERVIEW.md for detailed architecture
+  2. Decide on LiveKit deployment (cloud vs self-hosted)
+  3. Plan database schema updates for LiveKit call IDs
+  4. Start Phase 1: LiveKit infrastructure setup
+  5. Create LangGraph state machine for conversation flow
+
+════════════════════════════════════════════════════════════════════════════════
+Generated: 2026-03-18 | Location: /home/runner/work/voiceai/voiceai
+════════════════════════════════════════════════════════════════════════════════
