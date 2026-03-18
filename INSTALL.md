@@ -347,6 +347,27 @@ python3 /opt/voiceai/scripts/rotate_encryption_key.py
 > yapmasından kaynaklanır. Güncel `setup.sh` bu değişikliği artık yapmaz;
 > ancak eski kurulumdan etkilendiyseniz aşağıdaki adımları uygulayın.
 
+### Önce Dene — Kendi Bilgisayarından Direkt SSH
+
+Web konsoluna hiç girmeden önce kendi bilgisayarınızdan şunu deneyin:
+
+**Windows (CMD / PowerShell):**
+```
+ssh root@31.57.77.166
+```
+
+**Mac / Linux:**
+```bash
+ssh root@31.57.77.166
+```
+
+| Hata | Anlamı | Yapılacak |
+|------|--------|-----------|
+| Şifre sorar ✅ | SSH çalışıyor | Şifreyi girin |
+| `Permission denied` | Root girişi engellenmiş | Adım 1–3'ü uygulayın |
+| `Connection refused` | SSH servisi kapalı | Adım 1–3'ü uygulayın |
+| `Connection timed out` | Firewall 22 portunu blokluyor | Sağlayıcı panelinde TCP 22'yi açın |
+
 ### Adım 1 — VPS Sağlayıcısının Web Konsoluna Girin
 
 SSH bağlantısı tamamen kesildiğinde, VPS sağlayıcınızın **web konsolu
@@ -364,7 +385,9 @@ SSH bağlantısı tamamen kesildiğinde, VPS sağlayıcınızın **web konsolu
 
 ### Adım 2 — TTY Konsolda Oturum Açın
 
-Web konsolu açtığınızda aşağıdaki gibi siyah bir ekran ve yanıp sönen imleç görürsünüz:
+Web konsolu açtığınızda iki farklı türden biriyle karşılaşırsınız:
+
+**Tür A — Tam ekran siyah terminal (KVM/noVNC):**
 
 ```
 Ubuntu 22.04.5 LTS 31-57-77-166 tty1
@@ -372,15 +395,16 @@ Ubuntu 22.04.5 LTS 31-57-77-166 tty1
 31-57-77-166 login: _
 ```
 
-**Yapmanız gerekenler:**
+→ Siyah alana **fare ile tıklayın** (klavye odağını konsola verin), `root` yazıp **Enter**,
+  ardından şifrenizi yazıp **Enter** (şifre yazarken ekranda hiçbir şey görünmez — normaldir).
 
-1. `root` yazın → **Enter** tuşuna basın
-2. Root şifrenizi yazın → **Enter** tuşuna basın
-   - ⚠️ Şifre yazarken ekranda hiçbir şey görünmez; bu normaldir, yazmaya devam edin
-3. Giriş başarılıysa şuna benzer bir komut satırı görünür:
-   ```
-   root@31-57-77-166:~#
-   ```
+**Tür B — "Send Command" / Komut Gönder kutusu:**
+
+Panelde metin kutusu + Send/Gönder butonu varsa:
+1. Kutuya `root` yazın → **Send butonuna tıklayın** (veya kutudayken Enter'a basın)
+2. Siyah ekranda `Password:` çıkana kadar bekleyin (1–3 saniye)
+3. Kutuyu temizleyin, şifrenizi yazın → tekrar **Send** butonuna tıklayın
+4. `root@31-57-77-166:~#` promptu çıkınca giriş başarılıdır
 
 > **Şifrenizi unuttuysanız:** VPS sağlayıcısının kontrol panelinden
 > **"Reset Password"** veya **"Rescue Mode"** seçeneğini kullanarak
