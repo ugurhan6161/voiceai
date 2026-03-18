@@ -3,6 +3,12 @@
 .env.local
 .env.production
 
+# Arşiv dosyaları — repoya eklenmemeli
+*.zip
+*.tar.gz
+*.tar.bz2
+*.rar
+
 # SSL sertifikaları
 nginx/ssl/
 *.pem
