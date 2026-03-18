@@ -21,6 +21,40 @@ Aşağıdaki adımlar **repoda bulunmayan** ve kurulumdan önce tamamlanması ge
 
 ## 🚀 Adım Adım Kurulum
 
+### 0. (İsteğe Bağlı) VPS'i Sıfırla — Temiz Kurulum İçin
+
+Mevcut bir Ubuntu sunucusunu kurulumdan önce sıfırlamak istiyorsanız
+aşağıdaki komutları çalıştırın. Bu adım **yeni / hiç kurulmamış** bir
+sunucu için gerekli değildir.
+
+```bash
+# Scripti doğrudan çalıştır (proje klonlandıysa)
+sudo bash /opt/voiceai/scripts/cleanup.sh
+
+# veya repoya gerek kalmadan (güvenlik için önce indirip inceleyin):
+curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/cleanup.sh \
+  -o /tmp/cleanup.sh
+less /tmp/cleanup.sh          # içeriği inceleyin
+sudo bash /tmp/cleanup.sh
+```
+
+Script şunları yapar:
+
+| Adım | İşlem |
+|------|-------|
+| 1 | Mevcut VoiceAI Docker servislerini durdurur ve kaldırır |
+| 2 | Tüm Docker container / image / volume'larını temizler |
+| 3 | `/opt/voiceai` kurulum dizinini siler |
+| 4 | Asterisk yapılandırmasını sıfırlar |
+| 5 | Fail2ban `jail.local` kurallarını kaldırır |
+| 6 | UFW kurallarını sıfırlar (SSH:22 açık kalır) |
+| 7 | `apt` önbelleği ve geçici dosyaları temizler |
+
+> ⚠️ **Script çalışmadan önce onay sorar.** Devam etmek için
+> `evet` yazıp Enter'a basın.
+
+---
+
 ### 1. VPS Hazırlığı ve Temel Paketler
 
 ```bash
