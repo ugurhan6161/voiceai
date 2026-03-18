@@ -14,7 +14,8 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 PJSIP_CONF = "/etc/asterisk/pjsip.conf"
-PJSIP_CONF_BACKUP = "/opt/voiceai/asterisk/pjsip.conf"
+INSTALL_DIR = os.getenv("INSTALL_DIR", "/opt/voiceai")
+PJSIP_CONF_BACKUP = os.path.join(INSTALL_DIR, "asterisk", "pjsip.conf")
 DB_URL = os.getenv("DATABASE_URL", "postgresql://voiceai_user:voiceai_pass@voiceai-postgres:5432/voiceai")
 
 DAHILI_BASLANGIC = 101  # İlk dahili numarası

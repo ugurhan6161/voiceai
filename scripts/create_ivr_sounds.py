@@ -4,7 +4,7 @@ VoiceAI Platform — IVR Ses Dosyaları Oluşturucu
 KVKK ve dil seçim ses dosyalarını gTTS ile üretir.
 Format: 8kHz mono ulaw WAV (Asterisk uyumlu)
 
-Kullanım: python3 /opt/voiceai/scripts/create_ivr_sounds.py
+Kullanım: python3 scripts/create_ivr_sounds.py
 """
 import os
 import subprocess
