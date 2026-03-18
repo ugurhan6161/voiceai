@@ -31,6 +31,12 @@ sunucu için gerekli değildir.
 # Scripti doğrudan çalıştır (proje klonlandıysa)
 sudo bash /opt/voiceai/scripts/cleanup.sh
 
+# Onay vermeden otomatik çalıştır (-y / --yes):
+sudo bash /opt/voiceai/scripts/cleanup.sh --yes
+
+# Derin temizlik — Docker ve Asterisk paketleri de kaldırılır (--full):
+sudo bash /opt/voiceai/scripts/cleanup.sh --yes --full
+
 # veya repoya gerek kalmadan (güvenlik için önce indirip inceleyin):
 curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/cleanup.sh \
   -o /tmp/cleanup.sh
@@ -44,14 +50,15 @@ Script şunları yapar:
 |------|-------|
 | 1 | Mevcut VoiceAI Docker servislerini durdurur ve kaldırır |
 | 2 | Tüm Docker container / image / volume'larını temizler |
-| 3 | `/opt/voiceai` kurulum dizinini siler |
+| 3 | Proje kurulum dizinini siler |
 | 4 | Asterisk yapılandırmasını sıfırlar |
 | 5 | Fail2ban `jail.local` kurallarını kaldırır |
 | 6 | UFW kurallarını sıfırlar (SSH:22 açık kalır) |
 | 7 | `apt` önbelleği ve geçici dosyaları temizler |
 
-> ⚠️ **Script çalışmadan önce onay sorar.** Devam etmek için
-> `evet` yazıp Enter'a basın.
+`--full` ile ek olarak Docker ve Asterisk paketleri de APT'tan kaldırılır.
+
+> ⚠️ **Script varsayılan olarak onay sorar.** Otomatik mod için `--yes` kullanın.
 
 ---
 
@@ -338,3 +345,77 @@ python3 /opt/voiceai/scripts/rotate_encryption_key.py
 | Asterisk ARI 403 | `asterisk/ari.conf` içindeki kullanıcı/şifreyi `.env` ile eşleştir |
 | XTTS IP değişti | `docker inspect voiceai-xtts \| grep IPAddress` ile yeni IP'yi bul |
 | LiveKit bağlanamıyor | UFW'de port 7880-7882 açık mı kontrol et |
+
+---
+
+## 🚨 Cleanup Başarısız Olursa — Elle Temizlik ve VPS Format
+
+### Seçenek A — Derin Temizlik (`--full`)
+
+Standart `cleanup.sh` işe yaramadıysa önce `--full` modunu deneyin.
+Bu seçenek Docker ve Asterisk paketlerini APT üzerinden tamamen kaldırır:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/cleanup.sh \
+  -o /tmp/cleanup.sh
+sudo bash /tmp/cleanup.sh --yes --full
+```
+
+### Seçenek B — Elle Manuel Temizlik
+
+Aşağıdaki komutları tek tek çalıştırın; her biri bağımsız çalışır:
+
+```bash
+# 1. Docker servislerini durdur ve sil
+docker compose -f /opt/voiceai/docker-compose.yml down --volumes 2>/dev/null || true
+docker stop $(docker ps -aq) 2>/dev/null || true
+docker rm -f $(docker ps -aq) 2>/dev/null || true
+docker system prune -af --volumes
+
+# 2. Docker paketini kaldır
+systemctl stop docker 2>/dev/null || true
+apt-get purge -y docker-ce docker-ce-cli containerd.io \
+    docker-compose-plugin docker-buildx-plugin 2>/dev/null || true
+rm -rf /var/lib/docker /etc/docker /usr/local/lib/docker \
+       /usr/local/bin/docker-compose 2>/dev/null || true
+
+# 3. Asterisk'i kaldır
+systemctl stop asterisk 2>/dev/null || true
+apt-get purge -y asterisk asterisk-pjsip asterisk-res-ari 2>/dev/null || true
+rm -rf /etc/asterisk /var/lib/asterisk /var/log/asterisk 2>/dev/null || true
+
+# 4. VoiceAI dizinini sil
+rm -rf /opt/voiceai
+
+# 5. UFW sıfırla (SSH açık kalsın)
+ufw --force reset && ufw allow 22/tcp && ufw --force enable
+
+# 6. Fail2ban temizle
+rm -f /etc/fail2ban/jail.local && systemctl restart fail2ban 2>/dev/null || true
+
+# 7. Gereksiz paketleri temizle
+apt-get autoremove -y && apt-get autoclean -y
+```
+
+### Seçenek C — VPS Format (Son Çare)
+
+**Ne zaman gerekli?**
+Format yalnızca aşağıdaki durumlarda düşünülmelidir:
+
+- Sistemde bilinmeyen/kötü amaçlı yazılım bulunduğundan şüpheleniyorsanız
+- Yukarıdaki tüm adımlar başarısız oldu ve sistem hâlâ kararsızsa
+- İşletim sistemi dosyaları bozulmuş (kernel panic, boot başarısız vb.)
+
+**Normal bir VoiceAI yeniden kurulumu için VPS format gerekmez.**
+`--full` veya Seçenek B yeterlidir.
+
+**Format sonrası kurulum:**
+
+VPS sağlayıcı panelinizden **OS Reinstall → Ubuntu 22.04 LTS** seçin.
+Yeni root şifresi alın, SSH ile bağlanın, ardından:
+
+```bash
+# Temiz sunucuda tek komutla kurulum:
+curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/setup.sh \
+  | sudo bash
+```
