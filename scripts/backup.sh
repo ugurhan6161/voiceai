@@ -14,6 +14,10 @@ DATE=$(date +%Y%m%d_%H%M%S)
 RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
 
 # shellcheck source=/dev/null
+if [ ! -f "$INSTALL_DIR/.env" ]; then
+    echo "❌ HATA: $INSTALL_DIR/.env bulunamadı. INSTALL_DIR değişkenini kontrol edin." >&2
+    exit 1
+fi
 source "$INSTALL_DIR/.env"
 
 mkdir -p "$BACKUP_DIR"
@@ -30,7 +34,7 @@ BACKUP_SIZE=$(du -sh "$BACKUP_DIR/postgres_$DATE.sql.gz" | cut -f1)
 echo "✅ PostgreSQL yedeği: $BACKUP_SIZE"
 
 # Eski yedekleri temizle
-find $BACKUP_DIR -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
+find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
 echo "🗑️  $RETENTION_DAYS günden eski yedekler silindi"
 
 # Uzak depolama (rclone varsa)
