@@ -7,12 +7,13 @@ from routers import auth, admin, firma_panel
 from routers.ayarlar import router as ayarlar_router
 from routers.sablon_yonetimi import router as sablon_router
 from routers.sip import router as sip_router
+from routers.livekit import router as livekit_router
 from middleware.tenant_middleware import TenantMiddleware
 
 app = FastAPI(
     title="VoiceAI Backend API",
     description="Türkçe Sesli Resepsiyonist SaaS Platform",
-    version="2.0.0",
+    version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -38,6 +39,12 @@ try:
 except Exception:
     pass
 
+# LiveKit gerçek zamanlı ses router'ı
+try:
+    app.include_router(livekit_router)
+except Exception:
+    pass
+
 # ── CORS ──────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +63,7 @@ async def health():
     return {
         "status": "ok",
         "service": "backend",
-        "version": "2.0.0"
+        "version": "3.0.0"
     }
 
 
@@ -65,5 +72,5 @@ async def root():
     return {
         "message": "VoiceAI Platform API",
         "docs": "/docs",
-        "version": "2.0.0"
+        "version": "3.0.0"
     }

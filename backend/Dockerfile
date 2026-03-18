@@ -16,7 +16,9 @@ RUN pip install --no-cache-dir \
     "passlib[bcrypt]" \
     httpx \
     cryptography \
-    python-multipart
+    python-multipart \
+    # LiveKit API — token üretimi ve oda yönetimi için
+    livekit-api
 
 COPY . .
 
