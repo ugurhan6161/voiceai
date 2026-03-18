@@ -341,6 +341,8 @@ python3 /opt/voiceai/scripts/rotate_encryption_key.py
 
 ## 🆘 SSH / VPS Erişimi Kesildi — Acil Kurtarma
 
+> 📄 **Adım adım görsel rehber için:** [VPS_RECOVERY.md](VPS_RECOVERY.md)
+
 > Bu sorun genellikle `setup.sh`'ın eski sürümünün `PermitRootLogin no`
 > yapmasından kaynaklanır. Güncel `setup.sh` bu değişikliği artık yapmaz;
 > ancak eski kurulumdan etkilendiyseniz aşağıdaki adımları uygulayın.
@@ -360,9 +362,33 @@ SSH bağlantısı tamamen kesildiğinde, VPS sağlayıcınızın **web konsolu
 | OVH | Server Dashboard → KVM |
 | Diğerleri | Kontrol panelinde "Console", "VNC" veya "KVM" arayın |
 
-### Adım 2 — Kurtarma Scriptini Çalıştırın
+### Adım 2 — TTY Konsolda Oturum Açın
 
-Web konsolda root olarak giriş yaptıktan sonra:
+Web konsolu açtığınızda aşağıdaki gibi siyah bir ekran ve yanıp sönen imleç görürsünüz:
+
+```
+Ubuntu 22.04.5 LTS 31-57-77-166 tty1
+
+31-57-77-166 login: _
+```
+
+**Yapmanız gerekenler:**
+
+1. `root` yazın → **Enter** tuşuna basın
+2. Root şifrenizi yazın → **Enter** tuşuna basın
+   - ⚠️ Şifre yazarken ekranda hiçbir şey görünmez; bu normaldir, yazmaya devam edin
+3. Giriş başarılıysa şuna benzer bir komut satırı görünür:
+   ```
+   root@31-57-77-166:~#
+   ```
+
+> **Şifrenizi unuttuysanız:** VPS sağlayıcısının kontrol panelinden
+> **"Reset Password"** veya **"Rescue Mode"** seçeneğini kullanarak
+> root şifrenizi sıfırlayın, ardından tekrar deneyin.
+
+### Adım 3 — Kurtarma Scriptini Çalıştırın
+
+Root olarak giriş yaptıktan sonra aşağıdaki komutu yazın ve **Enter** tuşuna basın:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/ssh-recover.sh \
@@ -374,7 +400,7 @@ Script şunları yapar:
 - UFW'de 22/tcp portunu açık bırakır
 - fail2ban SSH ban listesini temizler
 
-### Adım 3 — PuTTY / VS Code ile Bağlanın
+### Adım 4 — PuTTY / VS Code ile Bağlanın
 
 Script tamamlandıktan sonra normal SSH bağlantısı çalışmalıdır:
 
@@ -400,7 +426,7 @@ systemctl restart sshd
 ufw allow 22/tcp && ufw reload
 
 # fail2ban ban listesini temizle
-fail2ban-client set sshd unbanip 0.0.0.0/0 2>/dev/null || true
+fail2ban-client unban --all 2>/dev/null || true
 ```
 
 ---
