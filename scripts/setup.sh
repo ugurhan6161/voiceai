@@ -7,6 +7,14 @@
 
 set -e  # Hata olursa dur
 
+# ── Etkileşimli dialog'ları devre dışı bırak ──────────────
+# apt/dpkg kurulumlarında "Pending kernel upgrade" gibi
+# ncurses dialog'larının çıkmasını engeller.
+export DEBIAN_FRONTEND=noninteractive
+# needrestart: çekirdek/servis yeniden başlatma dialog'unu bastırır
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+
 REPO_URL="${REPO_URL:-https://github.com/ugurhan6161/voiceai.git}"
 INSTALL_DIR="/opt/voiceai"
 
@@ -15,8 +23,8 @@ echo "================================================"
 
 # ── 1. Sistem Güncellemesi ─────────────────────────────────
 echo "📦 [1/10] Sistem güncelleniyor..."
-apt update && apt upgrade -y
-apt install -y curl wget git unzip htop net-tools ufw fail2ban python3
+apt-get update -q && apt-get upgrade -y -q
+apt-get install -y -q curl wget git unzip htop net-tools ufw fail2ban python3
 
 # ── 2. Docker Kurulumu ─────────────────────────────────────
 echo "🐳 [2/10] Docker kuruluyor..."
@@ -87,8 +95,8 @@ echo "✅ SSH: Root login kapalı"
 
 # ── 6. Otomatik Güncellemeler ───────────────────────────────
 echo "🔄 [6/10] Otomatik güvenlik güncellemeleri aktif ediliyor..."
-apt install -y unattended-upgrades
-dpkg-reconfigure --priority=low unattended-upgrades
+apt-get install -y -q unattended-upgrades
+dpkg-reconfigure -f noninteractive unattended-upgrades
 echo "✅ Otomatik güncellemeler aktif"
 
 # ── 7. Proje Klonlama ───────────────────────────────────────

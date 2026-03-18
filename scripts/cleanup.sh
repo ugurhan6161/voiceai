@@ -17,6 +17,11 @@
 # set -e kullanılmıyor; her adım bağımsız çalışır, bir hata
 # diğer adımları durdurmaz.
 
+# ── Etkileşimli dialog'ları devre dışı bırak ──────────────
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # INSTALL_DIR: env değişkeni varsa kullan, yoksa script'in üst dizini.
 # /opt/voiceai dışından çalıştırılıyorsa INSTALL_DIR ortam değişkeni ile belirtin.

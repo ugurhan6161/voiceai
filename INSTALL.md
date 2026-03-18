@@ -66,8 +66,12 @@ Script şunları yapar:
 
 ```bash
 # Root olarak giriş yap
-apt update && apt upgrade -y
-apt install -y curl wget git unzip htop net-tools ufw fail2ban
+# DEBIAN_FRONTEND ve NEEDRESTART_MODE: "Pending kernel upgrade" gibi
+# etkileşimli dialog'ların çıkmasını engeller
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+apt-get update && apt-get upgrade -y
+apt-get install -y curl wget git unzip htop net-tools ufw fail2ban
 ```
 
 ### 2. Docker Kurulumu
