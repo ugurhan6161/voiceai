@@ -66,8 +66,12 @@ Script şunları yapar:
 
 ```bash
 # Root olarak giriş yap
-apt update && apt upgrade -y
-apt install -y curl wget git unzip htop net-tools ufw fail2ban
+# DEBIAN_FRONTEND ve NEEDRESTART_MODE: "Pending kernel upgrade" gibi
+# etkileşimli dialog'ların çıkmasını engeller
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+apt-get update && apt-get upgrade -y
+apt-get install -y curl wget git unzip htop net-tools ufw fail2ban
 ```
 
 ### 2. Docker Kurulumu
@@ -335,10 +339,127 @@ python3 /opt/voiceai/scripts/rotate_encryption_key.py
 
 ---
 
+## 🆘 SSH / VPS Erişimi Kesildi — Acil Kurtarma
+
+> 📄 **Adım adım görsel rehber için:** [VPS_RECOVERY.md](VPS_RECOVERY.md)
+
+> Bu sorun genellikle `setup.sh`'ın eski sürümünün `PermitRootLogin no`
+> yapmasından kaynaklanır. Güncel `setup.sh` bu değişikliği artık yapmaz;
+> ancak eski kurulumdan etkilendiyseniz aşağıdaki adımları uygulayın.
+
+### Önce Dene — Kendi Bilgisayarından Direkt SSH
+
+Web konsoluna hiç girmeden önce kendi bilgisayarınızdan şunu deneyin:
+
+**Windows (CMD / PowerShell):**
+```
+ssh root@31.57.77.166
+```
+
+**Mac / Linux:**
+```bash
+ssh root@31.57.77.166
+```
+
+| Hata | Anlamı | Yapılacak |
+|------|--------|-----------|
+| Şifre sorar ✅ | SSH çalışıyor | Şifreyi girin |
+| `Permission denied` | Root girişi engellenmiş | Adım 1–3'ü uygulayın |
+| `Connection refused` | SSH servisi kapalı | Adım 1–3'ü uygulayın |
+| `Connection timed out` | Firewall 22 portunu blokluyor | Sağlayıcı panelinde TCP 22'yi açın |
+
+### Adım 1 — VPS Sağlayıcısının Web Konsoluna Girin
+
+SSH bağlantısı tamamen kesildiğinde, VPS sağlayıcınızın **web konsolu
+(KVM / noVNC)** üzerinden sunucuya doğrudan erişebilirsiniz:
+
+| Sağlayıcı | Konsol Yolu |
+|-----------|-------------|
+| Hetzner | Cloud Console → Sunucu → Console |
+| DigitalOcean | Droplet → Access → Launch Droplet Console |
+| Contabo | Customer Panel → Your Services → VNC |
+| Vultr | Products → Server → View Console |
+| Linode/Akamai | Linodes → Launch LISH Console |
+| OVH | Server Dashboard → KVM |
+| Diğerleri | Kontrol panelinde "Console", "VNC" veya "KVM" arayın |
+
+### Adım 2 — TTY Konsolda Oturum Açın
+
+Web konsolu açtığınızda iki farklı türden biriyle karşılaşırsınız:
+
+**Tür A — Tam ekran siyah terminal (KVM/noVNC):**
+
+```
+Ubuntu 22.04.5 LTS 31-57-77-166 tty1
+
+31-57-77-166 login: _
+```
+
+→ Siyah alana **fare ile tıklayın** (klavye odağını konsola verin), `root` yazıp **Enter**,
+  ardından şifrenizi yazıp **Enter** (şifre yazarken ekranda hiçbir şey görünmez — normaldir).
+
+**Tür B — "Send Command" / Komut Gönder kutusu:**
+
+Panelde metin kutusu + Send/Gönder butonu varsa:
+1. Kutuya `root` yazın → **Send butonuna tıklayın** (veya kutudayken Enter'a basın)
+2. Siyah ekranda `Password:` çıkana kadar bekleyin (1–3 saniye)
+3. Kutuyu temizleyin, şifrenizi yazın → tekrar **Send** butonuna tıklayın
+4. `root@31-57-77-166:~#` promptu çıkınca giriş başarılıdır
+
+> **Şifrenizi unuttuysanız:** VPS sağlayıcısının kontrol panelinden
+> **"Reset Password"** veya **"Rescue Mode"** seçeneğini kullanarak
+> root şifrenizi sıfırlayın, ardından tekrar deneyin.
+
+### Adım 3 — Kurtarma Scriptini Çalıştırın
+
+Root olarak giriş yaptıktan sonra aşağıdaki komutu yazın ve **Enter** tuşuna basın:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/ssh-recover.sh \
+  | bash
+```
+
+Script şunları yapar:
+- `PermitRootLogin yes` ayarlar ve SSH servisini yeniden başlatır
+- UFW'de 22/tcp portunu açık bırakır
+- fail2ban SSH ban listesini temizler
+
+### Adım 4 — PuTTY / VS Code ile Bağlanın
+
+Script tamamlandıktan sonra normal SSH bağlantısı çalışmalıdır:
+
+```
+Host     : 31.57.77.166
+Port     : 22
+Kullanıcı: root
+```
+
+### Elle Kurtarma (curl yoksa)
+
+Web konsoldan tek tek komut olarak çalıştırın:
+
+```bash
+# SSH root girişini aç
+sed -i 's/^\s*PermitRootLogin\s.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+grep -q 'PermitRootLogin' /etc/ssh/sshd_config || echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+
+# SSH'yi yeniden başlat
+systemctl restart sshd
+
+# UFW: SSH portunu garanti altına al
+ufw allow 22/tcp && ufw reload
+
+# fail2ban ban listesini temizle
+fail2ban-client unban --all 2>/dev/null || true
+```
+
+---
+
 ## 📋 Sorun Giderme
 
 | Sorun | Çözüm |
 |-------|-------|
+| SSH bağlantısı kesildi | [SSH Kurtarma](#-ssh--vps-erişimi-kesildi--acil-kurtarma) bölümüne bakın |
 | Nginx SSL hatası | `nginx/ssl/` dizinini ve sertifika dosyalarını kontrol et |
 | Ollama model yok | `docker exec voiceai-ollama ollama pull llama3.1:8b` çalıştır |
 | DB bağlantı hatası | `.env` içindeki `POSTGRES_PASSWORD`'u kontrol et |
