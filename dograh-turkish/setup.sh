@@ -168,11 +168,12 @@ fi
 
 if [ ! -f "$INSTALL_DIR/.env" ] || [ "${FORCE_ENV:-false}" = "true" ]; then
     # Güvenli değerler üret
-    JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || openssl rand -hex 32)
-    PG_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(16))" 2>/dev/null || openssl rand -hex 16)
-    REDIS_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(12))" 2>/dev/null || openssl rand -hex 12)
-    MINIO_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(16))" 2>/dev/null || openssl rand -hex 16)
-    TURN_SECRET_VAL=$(python3 -c "import secrets; print(secrets.token_hex(24))" 2>/dev/null || openssl rand -hex 24)
+    # Tüm şifreler hex formatında üretilir (URL-safe ve tutarlı)
+    JWT_SECRET=$(openssl rand -hex 32)
+    PG_PASS=$(openssl rand -hex 16)
+    REDIS_PASS=$(openssl rand -hex 12)
+    MINIO_PASS=$(openssl rand -hex 16)
+    TURN_SECRET_VAL=$(openssl rand -hex 24)
 
     cat > "$INSTALL_DIR/.env" << ENVEOF
 # ─────────────────────────────────────────────────────────────
@@ -302,7 +303,7 @@ external-ip=$VPS_IP
 min-port=49152
 max-port=49200
 use-auth-secret
-static-auth-secret=$(grep '^TURN_SECRET=' "$INSTALL_DIR/.env" | cut -d= -f2)
+static-auth-secret=$(grep '^TURN_SECRET=' "$INSTALL_DIR/.env" | cut -d= -f2 || echo "dograh-turn-secret-change-me")
 realm=dograh.local
 no-multicast-peers
 no-cli

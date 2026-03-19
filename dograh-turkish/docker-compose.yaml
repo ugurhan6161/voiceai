@@ -67,6 +67,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_API_CORS_ALLOW_ORIGIN: "*"
+    # Portlar localhost'a bağlı — güvenlik için.
+    # Container'lar arası iletişim Docker ağı üzerinden (minio:9000) çalışır.
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
@@ -171,8 +173,10 @@ services:
       BACKEND_URL: "${BACKEND_URL:-http://api:8000}"
       NODE_ENV: "oss"
       ENABLE_TELEMETRY: "${ENABLE_TELEMETRY:-false}"
-      POSTHOG_KEY: "phc_ItizB1dP6yv7ZYobbcqrpxTdbomDA8hJFSEmAMdYvIr"
-      POSTHOG_HOST: "https://us.posthog.com"
+      # PostHog telemetri: ENABLE_TELEMETRY=false olduğunda kullanılmaz.
+      # Telemetriyi açarsanız kendi PostHog anahtarınızı kullanın.
+      POSTHOG_KEY: "${POSTHOG_KEY:-}"
+      POSTHOG_HOST: "${POSTHOG_HOST:-https://us.posthog.com}"
     ports:
       - "3010:3010"
     depends_on:
