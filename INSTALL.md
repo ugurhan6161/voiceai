@@ -1,52 +1,25 @@
 # VoiceAI Platform — VPS Kurulum Rehberi
 
 > Ubuntu 22.04 LTS · 8 Çekirdek · 16 GB RAM · 100 GB NVMe
->
-> **Tüm AI servisleri ücretsiz** — API anahtarı gerekmez!
 
 ---
 
-## 🚀 Hızlı Kurulum (Önerilen — Tek Komut)
+## ⚠️ Sistemin Çalışması için Eksik / Yapılması Gerekenler
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/ugurhan6161/voiceai/main/scripts/setup.sh | sudo bash
-```
+Aşağıdaki adımlar **repoda bulunmayan** ve kurulumdan önce tamamlanması gereken işlemlerdir:
 
-Bu komut aşağıdakilerin **tamamını otomatik** yapar:
-
-| # | İşlem | Durum |
-|---|-------|:-----:|
-| 1 | Sistem güncelleme + temel paketler | ✅ Otomatik |
-| 2 | Docker + Docker Compose v2 | ✅ Otomatik |
-| 3 | UFW güvenlik duvarı | ✅ Otomatik |
-| 4 | Fail2ban (SSH + SIP koruması) | ✅ Otomatik |
-| 5 | SSH güvenlik sıkılaştırma | ✅ Otomatik |
-| 6 | Otomatik güvenlik güncellemeleri | ✅ Otomatik |
-| 7 | Proje klonlama | ✅ Otomatik |
-| 8 | `.env` yapılandırma + güvenli şifre üretimi | ✅ Otomatik |
-| 9 | SSL sertifikası (self-signed) | ✅ Otomatik |
-| 10 | Asterisk PBX kurulumu (native) | ✅ Otomatik |
-| 11 | 14 Docker servis başlatma | ✅ Otomatik |
-| 12 | Veritabanı şema yükleme | ✅ Otomatik |
-| 13 | LLM model indirme (llama3.1:8b) | ✅ Otomatik |
-| 14 | Sağlık kontrolleri | ✅ Otomatik |
-
-> ⏱️ İlk kurulum ~15-20 dakika sürer. Tamamlandığında tüm servisler çalışır durumda olacaktır.
-
-### Ücretsiz AI Servisleri
-
-| Servis | Teknoloji | Türkçe | Maliyet |
-|--------|-----------|:------:|---------|
-| STT (Konuşma→Metin) | Faster-Whisper Turbo INT8 | ✅ | Ücretsiz (yerel) |
-| LLM (Yapay Zeka) | Ollama + llama3.1:8b | ✅ | Ücretsiz (yerel) |
-| TTS (Metin→Ses) | gTTS | ✅ | Ücretsiz |
-| RAG (Belge Arama) | ChromaDB | ✅ | Ücretsiz (yerel) |
+| # | Gereksinim | Açıklama |
+|---|-----------|---------|
+| 1 | **`.env` dosyası** | `.env.example` kopyalanıp gerçek değerler girilmeli |
+| 2 | **SSL sertifikaları** | `nginx/ssl/fullchain.pem` ve `privkey.pem` üretilmeli |
+| 3 | **Ollama LLM modeli** | `llama3.1:8b` Docker başladıktan sonra indirilmeli |
+| 4 | **Domain / DNS** | Statik IP'ye alan adı yönlendirilmeli (isteğe bağlı) |
+| 5 | **Asterisk native** | Asterisk VPS'e doğrudan kurulmalı (Docker dışı) |
+| 6 | **LiveKit secrets** | `.env` dosyasında `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` üretilmeli |
 
 ---
 
-## 📋 Adım Adım Kurulum (Manuel)
-
-Tek komut yerine adım adım yapmak isterseniz aşağıdaki talimatları izleyin.
+## 🚀 Adım Adım Kurulum
 
 ### 0. (İsteğe Bağlı) VPS'i Sıfırla — Temiz Kurulum İçin
 
@@ -318,11 +291,11 @@ bash /opt/voiceai/scripts/health_check.sh
 
 | Servis | URL |
 |--------|-----|
-| Admin Panel | `http://<VPS_IP>/admin/login` |
-| Firma Panel | `http://<VPS_IP>/firma/login` |
-| API Docs | `http://<VPS_IP>/api/docs` |
-| Grafana | `http://<VPS_IP>:3000` |
-| LiveKit | `ws://<VPS_IP>:7880` |
+| Admin Panel | http://31.57.77.166/admin/login |
+| Firma Panel | http://31.57.77.166/firma/login |
+| API Docs | http://31.57.77.166/api/docs |
+| Grafana | http://31.57.77.166:3000 |
+| LiveKit | ws://31.57.77.166:7880 |
 
 **Varsayılan Admin Girişi**
 - Email: `admin@voiceai.com`
