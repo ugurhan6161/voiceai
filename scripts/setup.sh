@@ -39,6 +39,22 @@ log_step() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
+detect_vps_ip() {
+    local ip
+    ip=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || true)
+    if [ -z "$ip" ]; then
+        ip=$(curl -s --connect-timeout 5 icanhazip.com 2>/dev/null || true)
+    fi
+    if [ -z "$ip" ]; then
+        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    fi
+    if [ -z "$ip" ]; then
+        echo ""
+        return 1
+    fi
+    echo "$ip"
+}
+
 wait_for_container() {
     local container=$1
     local max_wait=${2:-120}
@@ -153,10 +169,16 @@ echo "  ✅ Fail2ban aktif (SSH + Asterisk koruması)"
 
 # ── 5. SSH Güvenliği ───────────────────────────────────────────
 log_step 5 "🔑 SSH güvenliği sıkılaştırılıyor..."
-sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config 2>/dev/null || true
-sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config 2>/dev/null || true
-systemctl restart sshd 2>/dev/null || true
-echo "  ✅ SSH: Root login kapatıldı"
+if grep -q "^PermitRootLogin yes" /etc/ssh/sshd_config 2>/dev/null || \
+   grep -q "^#PermitRootLogin yes" /etc/ssh/sshd_config 2>/dev/null; then
+    sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+    sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+    systemctl restart sshd 2>/dev/null || true
+    echo "  ✅ SSH: Root login kapatıldı"
+else
+    echo "  ℹ️  SSH: Root login zaten kapalı veya yapılandırma farklı"
+    echo "  ⚠️  Lütfen /etc/ssh/sshd_config dosyasını kontrol edin"
+fi
 
 # ── 6. Otomatik Güncellemeler ──────────────────────────────────
 log_step 6 "🔄 Otomatik güvenlik güncellemeleri aktif ediliyor..."
@@ -192,7 +214,11 @@ if [ ! -f "$INSTALL_DIR/.env" ]; then
     GRAFANA_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(16))")
 
     # VPS IP'sini algıla
-    VPS_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo "localhost")
+    VPS_IP=$(detect_vps_ip)
+    if [ -z "$VPS_IP" ]; then
+        echo "  ⚠️  VPS IP adresi algılanamadı — .env dosyasında APP_DOMAIN'i manuel düzenleyin"
+        VPS_IP="VPS_IP_ADRESINIZ"
+    fi
 
     sed -i "s|APP_SECRET_KEY=.*|APP_SECRET_KEY=$APP_SECRET|" .env
     sed -i "s|APP_DOMAIN=.*|APP_DOMAIN=$VPS_IP|" .env
@@ -213,7 +239,11 @@ fi
 log_step 9 "🔐 SSL sertifikası hazırlanıyor..."
 mkdir -p "$INSTALL_DIR/nginx/ssl"
 if [ ! -f "$INSTALL_DIR/nginx/ssl/fullchain.pem" ]; then
-    VPS_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo "localhost")
+    VPS_IP=$(detect_vps_ip)
+    if [ -z "$VPS_IP" ]; then
+        echo "  ⚠️  VPS IP algılanamadı — SSL sertifikası hostname ile oluşturulacak"
+        VPS_IP=$(hostname -f 2>/dev/null || echo "voiceai-server")
+    fi
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
       -keyout "$INSTALL_DIR/nginx/ssl/privkey.pem" \
       -out    "$INSTALL_DIR/nginx/ssl/fullchain.pem" \
@@ -274,20 +304,24 @@ PG_DB="${PG_DB:-voiceai}"
 
 for schema_file in settings_schema.sql sip_dahili_schema.sql super_admin.sql; do
     if [ -f "$INSTALL_DIR/database/$schema_file" ]; then
-        docker exec -i voiceai-postgres psql -U "$PG_USER" -d "$PG_DB" \
-          < "$INSTALL_DIR/database/$schema_file" 2>/dev/null && \
-          echo "  ✅ $schema_file yüklendi" || \
-          echo "  ℹ️  $schema_file zaten yüklü veya atlandı"
+        if docker exec -i voiceai-postgres psql -U "$PG_USER" -d "$PG_DB" \
+          < "$INSTALL_DIR/database/$schema_file" >/dev/null 2>&1; then
+            echo "  ✅ $schema_file yüklendi"
+        else
+            echo "  ℹ️  $schema_file atlandı (zaten yüklü olabilir)"
+        fi
     fi
 done
 
 # Sektör şemalarını da yükle
 for schema_file in otel_schema.sql klinik_schema.sql hali_yikama_schema.sql su_tup_schema.sql; do
     if [ -f "$INSTALL_DIR/database/$schema_file" ]; then
-        docker exec -i voiceai-postgres psql -U "$PG_USER" -d "$PG_DB" \
-          < "$INSTALL_DIR/database/$schema_file" 2>/dev/null && \
-          echo "  ✅ $schema_file yüklendi" || \
-          echo "  ℹ️  $schema_file zaten yüklü veya atlandı"
+        if docker exec -i voiceai-postgres psql -U "$PG_USER" -d "$PG_DB" \
+          < "$INSTALL_DIR/database/$schema_file" >/dev/null 2>&1; then
+            echo "  ✅ $schema_file yüklendi"
+        else
+            echo "  ℹ️  $schema_file atlandı (zaten yüklü olabilir)"
+        fi
     fi
 done
 
@@ -342,7 +376,10 @@ else
 fi
 
 # ── Tamamlandı ─────────────────────────────────────────────────
-VPS_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || echo "sunucu-ip")
+VPS_IP=$(detect_vps_ip)
+if [ -z "$VPS_IP" ]; then
+    VPS_IP="<VPS_IP_ADRESINIZ>"
+fi
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
